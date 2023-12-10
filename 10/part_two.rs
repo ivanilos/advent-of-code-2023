@@ -122,7 +122,10 @@ fn change_start(input: &mut Vec<Vec<char>>, cycle: &Vec<(usize, usize)>) {
     panic!("start symbol not found");
 }
 
-fn get_inside_cycle_empty_squares(input: &mut Vec<Vec<char>>, cycle: Vec<(usize, usize)>) -> u32 {
+
+// We use the Ray casting algorithm to find the number of points
+// https://en.wikipedia.org/wiki/Point_in_polygon#Ray_casting_algorithm
+fn get_points_inside_cycle(input: &mut Vec<Vec<char>>, cycle: Vec<(usize, usize)>) -> u32 {
     let cycle_set: HashSet<(usize, usize)> = HashSet::from_iter(cycle.iter().cloned());
 
     let mut result = 0;
@@ -179,7 +182,7 @@ fn solve(input: &mut Vec<Vec<char>>) -> u32 {
 
     change_start(input, &cycle);
 
-    get_inside_cycle_empty_squares(input, cycle)
+    get_points_inside_cycle(input, cycle)
 }
 
 fn main() {
