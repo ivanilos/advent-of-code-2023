@@ -1,97 +1,138 @@
+use std::collections::HashMap;
 use std::fs;
 
-fn read_input() -> Vec<Vec<Vec<char>>> {
-    let input: Vec<String> = fs::read_to_string("input.txt")
+const CYCLES: u32 = 1000000000;
+
+fn read_input() -> Vec<Vec<char>> {
+    fs::read_to_string("input.txt")
         .unwrap()
         .lines()
-        .map(String::from)
-        .collect();
-
-    let mut grids: Vec<Vec<Vec<char>>> = vec![];
-    let mut cur_grid: Vec<Vec<char>> = vec![];
-    for line in input {
-        if line.is_empty() {
-            grids.push(cur_grid);
-            cur_grid = vec![];
-        } else {
-            cur_grid.push(line.chars().collect());
-        }
-    }
-
-    grids.push(cur_grid);
-
-    grids
+        .map(|s| s.chars().collect())
+        .collect::<Vec<Vec<char>>>()
 }
 
-fn mirror_horizontally(grid: &Vec<Vec<char>>) -> usize {
-    let mut result = 0;
+fn tilt_north(grid: &mut Vec<Vec<char>>) {
+    for col in 0..(grid[0].len()) {
+        let mut next_free_row = 0;
 
-    for left_center in 0..(grid[0].len() - 1) {
-        let mut left = left_center as i32;
-        let mut right = (left_center + 1) as i32;
+        while next_free_row < grid.len() && grid[next_free_row][col] != '.' {
+            next_free_row += 1
+        }
 
-        let mut differences: Vec<(usize, usize)> = vec![];
+        for row in 0..(grid.len()) {
+            if grid[row][col] == 'O' && row > next_free_row {
+                grid[row][col] = '.';
+                grid[next_free_row][col] = 'O';
 
-        while left >= 0 && right < grid[0].len() as i32 {
-            for i in 0..(grid.len()) {
-                if grid[i][left as usize] != grid[i][right as usize] {
-                    differences.push((i, left as usize));
+                while next_free_row < grid.len() && grid[next_free_row][col] != '.' {
+                    next_free_row += 1
+                }
+            } else if grid[row][col] == '#' {
+                next_free_row = row + 1;
+                while next_free_row < grid.len() && grid[next_free_row][col] != '.' {
+                    next_free_row += 1
                 }
             }
-            left -= 1;
-            right += 1;
-        }
-
-        if differences.len() == 1 {
-            result += left_center + 1;
         }
     }
-
-    result
 }
 
-fn mirror_vertically(grid: &Vec<Vec<char>>) -> usize {
-    let mut result = 0;
+fn tilt_west(grid: &mut Vec<Vec<char>>) {
+    for row in 0..(grid.len()) {
+        let mut next_free_col = 0;
 
-    for top_center in 0..(grid.len() - 1) {
-        let mut top = top_center as i32;
-        let mut bottom = (top_center + 1) as i32;
+        while next_free_col < grid[row].len() && grid[row][next_free_col] != '.' {
+            next_free_col += 1
+        }
 
-        let mut differences: Vec<(usize, usize)> = vec![];
+        for col in 0..(grid[row].len()) {
+            if grid[row][col] == 'O' && col > next_free_col {
+                grid[row][col] = '.';
+                grid[row][next_free_col] = 'O';
 
-        while top >= 0 && bottom < grid.len() as i32 {
-            for i in 0..(grid[top as usize].len()) {
-                if grid[top as usize][i] != grid[bottom as usize][i] {
-                    differences.push((top as usize, i));
+                while next_free_col < grid.len() && grid[row][next_free_col] != '.' {
+                    next_free_col += 1
+                }
+            } else if grid[row][col] == '#' {
+                next_free_col = col + 1;
+                while next_free_col < grid.len() && grid[row][next_free_col] != '.' {
+                    next_free_col += 1
                 }
             }
-            top -= 1;
-            bottom += 1;
         }
+    }
+}
 
-        if differences.len() == 1 {
-            result += top_center + 1;
+fn tilt_south(grid: &mut Vec<Vec<char>>) {
+    grid.reverse();
+    tilt_north(grid);
+    grid.reverse();
+}
+
+fn tilt_east(grid: &mut Vec<Vec<char>>) {
+    for row in 0..(grid.len()) {
+        grid[row].reverse();
+    }
+
+    tilt_west(grid);
+
+    for row in 0..(grid.len()) {
+        grid[row].reverse();
+    }
+}
+
+fn get_load(grid: Vec<Vec<char>>) -> usize {
+    let mut result = 0;
+
+    for i in 0..(grid.len()) {
+        for j in 0..(grid[i].len()) {
+            if grid[i][j] == 'O' {
+                result += grid.len() - i;
+            }
         }
     }
 
     result
 }
 
-fn solve(grids: Vec<Vec<Vec<char>>>) -> usize {
-    let mut result = 0;
+fn solve(mut grid: Vec<Vec<char>>) -> usize {
+    let mut seen_position: HashMap<Vec<Vec<char>>, u32> = HashMap::new();
 
-    for grid in grids {
-        result += mirror_horizontally(&grid);
-        result += 100 * mirror_vertically(&grid);
+    let mut period = 0;
+
+    let mut cycle = 0;
+    while cycle < CYCLES {
+        if seen_position.contains_key(&grid) {
+            period = cycle - seen_position[&grid];
+            break;
+        }
+
+        seen_position.insert(grid.clone(), cycle);
+
+        tilt_north(&mut grid);
+        tilt_west(&mut grid);
+        tilt_south(&mut grid);
+        tilt_east(&mut grid);
+
+        cycle += 1;
     }
 
-    result
+    while (CYCLES - cycle) % period != 0 {
+        tilt_north(&mut grid);
+        tilt_west(&mut grid);
+        tilt_south(&mut grid);
+        tilt_east(&mut grid);
+
+        cycle += 1;
+    }
+
+    get_load(grid)
 }
 
 fn main() {
-    let grids = read_input();
+    let grid = read_input();
 
-    let result = solve(grids);
+    let result = solve(grid);
 
     println!("{result}");
 }
