@@ -11,7 +11,7 @@ This was mostly done for fun and learning.
 
 
 ## Compiling and Running
-All codes were compiled with `rustc 1.73.0 (cc66ad468 2023-10-03)` on a `CPU info Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz`.
+All codes were compiled with `rustc 1.73.0 (cc66ad468 2023-10-03)` on a `Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz`.
 
 It was decided not to use `cargo` unless really necessary since the codes are usually on a single file and about a couple hundred lines long.
 
