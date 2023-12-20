@@ -1,7 +1,7 @@
 # advent-of-code-2023
 My codes for advent of code 2023
 
-This if my first time coding in Rust. 
+This is my first time coding in Rust. 
 
 Before, I had only read the rust book (https://doc.rust-lang.org/book/) up until (including) chapter 4.2 (about references and borrowing).
 
